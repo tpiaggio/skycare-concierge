@@ -204,3 +204,13 @@ def test_rebooking_hitl_block_rejection_and_approval_execution(
     after_confirm = isolated_repo.get_flight("SC408")
     assert after_confirm is not None
     assert after_confirm.economy_seats == initial_seats - 1
+
+    # 4. Resetting demo data restores seat counts, seeded PNRs, and clears approvals
+    isolated_repo.reset_demo_data()
+    restored_flight = isolated_repo.get_flight("SC408")
+    assert restored_flight is not None
+    assert restored_flight.economy_seats == initial_seats
+    restored_res, _ = isolated_repo.get_reservation_by_pnr("SKY842")
+    assert restored_res is not None
+    assert restored_res.rebooking_status == "NEEDS_RECOVERY"
+    assert isolated_repo.list_approvals() == []

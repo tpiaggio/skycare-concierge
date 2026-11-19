@@ -531,25 +531,43 @@ class ReservationRepository:
                 """
             )
 
+    @staticmethod
+    def _insert_seed_data(conn: sqlite3.Connection) -> None:
+        conn.executemany(
+            """
+            INSERT OR IGNORE INTO flights VALUES
+            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            _SEED_FLIGHTS,
+        )
+        conn.executemany(
+            """
+            INSERT OR IGNORE INTO reservations VALUES
+            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            _SEED_RESERVATIONS,
+        )
+
     def _ensure_seeded(self) -> None:
         with self._lock, self._connect() as conn:
             count = conn.execute("SELECT COUNT(*) FROM reservations").fetchone()[0]
             if count > 0:
                 return
-            conn.executemany(
-                """
-                INSERT OR IGNORE INTO flights VALUES
-                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                _SEED_FLIGHTS,
-            )
-            conn.executemany(
-                """
-                INSERT OR IGNORE INTO reservations VALUES
-                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                _SEED_RESERVATIONS,
-            )
+            self._insert_seed_data(conn)
+
+    def reset_demo_data(self) -> None:
+        """Clear mutable operational tables and restore seeded demo flights and PNRs."""
+        with self._lock, self._connect() as conn:
+            for statement in (
+                "DELETE FROM approvals",
+                "DELETE FROM rebookings",
+                "DELETE FROM vouchers",
+                "DELETE FROM reservations",
+                "DELETE FROM flights",
+            ):
+                conn.execute(statement)
+            self._insert_seed_data(conn)
+        self.sync_to_gcs()
 
     @staticmethod
     def _row_to_flight(row: sqlite3.Row) -> FlightRecord:

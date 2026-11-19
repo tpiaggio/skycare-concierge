@@ -43,7 +43,7 @@ def test_offline_fastapi_ui_hitl_and_a2a_endpoints(
     with TestClient(app) as client:
         ui = client.get("/")
         assert ui.status_code == 200
-        assert "SkyCare Concierge" in ui.text
+        assert "SkyCare" in ui.text
 
         asset = client.get("/skycare-assets/app.js")
         assert asset.status_code == 200
@@ -101,30 +101,88 @@ def test_offline_fastapi_ui_hitl_and_a2a_endpoints(
         assert audit.status_code == 200
         serialized = str(audit.json())
         assert "elena@example.com" not in serialized
+        assert len(audit.json()) >= 1
 
         card = client.get("/a2a/app/.well-known/agent-card.json")
         assert card.status_code == 200
         assert card.json()["name"] == "skycare_concierge"
 
-        home = client.get("/")
-        assert home.status_code == 200
-        assert "langSelect" in home.text
-        assert "tabBtnFlights" in home.text
-        assert "tabBtnApprovals" in home.text
-        assert "tabBtnActivity" in home.text
+        # Verify Passenger UI (/, /ui) stays clean and free of supervisor/model/route clutter
+        for passenger_route in ("/", "/ui"):
+            home = client.get(passenger_route)
+            assert home.status_code == 200
+            assert "SkyCare" in home.text
+            assert "langSelect" in home.text
+            assert "newSessionBtn" in home.text
+            assert "demoToggleBtn" in home.text
+            assert "supervisor.js" not in home.text
+            assert "/supervisor" not in home.text
+            assert "Flash 3.8" not in home.text
+            assert "tabBtnFlights" not in home.text
+
+        # Verify separate Supervisor Desk route (/supervisor)
+        sup_html = client.get("/supervisor")
+        assert sup_html.status_code == 200
+        assert "SkyCare Supervisor Desk" in sup_html.text
+        assert "pendingBadge" in sup_html.text
+        assert "resetDemoBtn" in sup_html.text
+        assert "safeguardsCard" in sup_html.text
+        assert "supervisor.js" in sup_html.text
 
         css = client.get("/skycare-assets/styles.css")
         assert css.status_code == 200
-        assert "#f6f8fc" in css.text
+        assert "#f7f8fa" in css.text
+        assert "#1b365d" in css.text
+        assert "#1b654c" in css.text
+
+        common_js = client.get("/skycare-assets/common.js")
+        assert common_js.status_code == 200
+        assert "Intl.NumberFormat" in common_js.text
 
         js = client.get("/skycare-assets/app.js")
         assert js.status_code == 200
-        assert "Bandeja de Aprobación HITL" in js.text
-        assert "Gemini 4 · Hydrogen" in js.text
-        assert "Intl.NumberFormat" in js.text
+        assert "renderFormattedText" in js.text
         assert "callingTools" in js.text
         assert "interruptedReply" in js.text
+        assert "emptyReply" in js.text
+        assert "waitingHitlBanner" in js.text
+        assert "SKY842" in js.text
         assert "Pro 3.1" not in js.text
+
+        sup_js = client.get("/skycare-assets/supervisor.js")
+        assert sup_js.status_code == 200
+        assert "/api/approvals" in sup_js.text
+        assert "/api/audit" in sup_js.text
+        assert "/api/demo/reset" in sup_js.text
+        assert "Tope Automático de Vouchers" in sup_js.text
+
+        # Verify /api/demo/reset clears approvals, vouchers, and audit buffer while restoring PNRs
+        repo.record_voucher(
+            pnr="SKY905",
+            voucher_type="MEAL",
+            amount_usd=35.0,
+            vendor_name="ATL Bistro",
+        )
+        reset_resp = client.post("/api/demo/reset")
+        assert reset_resp.status_code == 200
+        reset_json = reset_resp.json()
+        assert reset_json["status"] == "reset"
+        assert reset_json["approvals_count"] == 0
+        assert reset_json["disruptions_count"] == 4
+
+        assert client.get("/api/approvals").json() == []
+        assert client.get("/api/audit?limit=10").json() == []
+        reset_disruptions = client.get("/api/disruptions").json()
+        assert {item["pnr"] for item in reset_disruptions} == {
+            "SKY842",
+            "SKY319",
+            "SKY905",
+            "SKY404",
+        }
+        assert all(
+            len(item["vouchers"]) == 0 and len(item["rebookings"]) == 0
+            for item in reset_disruptions
+        )
 
         status = client.get("/api/status")
         assert status.status_code == 200

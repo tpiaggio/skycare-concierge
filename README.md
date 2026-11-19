@@ -27,7 +27,7 @@ flowchart TD
 
     Triage & Planner & Care -->|"Strict Pydantic Tools"| Repo[("ReservationRepository (WAL SQLite + GCS Snapshot)")]
     Care -->|"Voucher > $150 or PNR Rebooking"| HITL["Single-Use HITL Gate (PENDING -> APPROVED -> CONSUMED)"]
-    HITL <-->|"Supervisor Decision (/api/approvals)"| Drawer["SkyCare UI HITL Approval Drawer"]
+    HITL <-->|"Supervisor Decision (/api/approvals)"| Drawer["SkyCare Supervisor Desk (/supervisor)"]
 
     Coord -->|"Non-blocking after_agent_callback"| AsyncMem["AsyncMemoryCoordinator (PII-Sanitized)"]
     AsyncMem --> MemBank["Vertex AI Agent Platform (Sessions & Memory Bank)"]
@@ -58,7 +58,7 @@ Start locally or open the deployed Web UI (`/`), then walk through all four seed
 | PNR | Passenger & Route | Disruption Scenario | What It Demonstrates |
 | --- | --- | --- | --- |
 | `SKY842` | Elena Rostova (`Gold`) · `JFK -> LHR -> ZRH` | `SC402` cancelled (Crew Timeout / Storm) | Flash triage → **Pro** multi-leg vs. nonstop (`SC408`) optimization + UK/EU261 EUR 600 + HITL rebooking gate |
-| `SKY319` | Marcus Vance (`Silver`) · `ORD -> SFO -> NRT` | `SC118` delayed `200m` (Mechanical) | High-value `$210` hotel voucher exceeding `$150.00` cap → **HITL Approval Drawer** block/approve flow |
+| `SKY319` | Marcus Vance (`Silver`) · `ORD -> SFO -> NRT` | `SC118` delayed `200m` (Mechanical) | High-value `$210` hotel voucher exceeding `$150.00` cap → **Supervisor Desk (`/supervisor`)** block/approve + live passenger update |
 | `SKY905` | Priya Nair (`Platinum`) · `ATL -> BOS` | `SC214` delayed `75m` (ATC Weather) | Low-value `$35` meal voucher → immediate policy auto-approval (`VCH-...`) |
 | `SKY404` | David Kim (`Blue`) · `LAX -> SEA` | None (`SC510` On Time) | Negative control (refuses false compensation) |
 
@@ -80,7 +80,8 @@ USE_IN_MEMORY_SESSION=true uv run uvicorn app.fast_api_app:app --host 127.0.0.1 
 ```
 
 Open:
-- **SkyCare Operations Desk UI**: `http://127.0.0.1:8000/` (and `/ui`)
+- **SkyCare Passenger Concierge UI**: `http://127.0.0.1:8000/` (and `/ui`)
+- **SkyCare Supervisor Desk UI**: `http://127.0.0.1:8000/supervisor`
 - **ADK Dev UI**: `http://127.0.0.1:8000/dev-ui/`
 - **OpenAPI Docs**: `http://127.0.0.1:8000/docs`
 - **A2A Agent Card**: `http://127.0.0.1:8000/a2a/app/.well-known/agent-card.json`
@@ -136,7 +137,7 @@ skycare-concierge/
 │   ├── security/                # Luhn-validated PII redactor & Secret Manager provider abstraction
 │   ├── storage/repository.py    # WAL SQLite + optional GCS snapshot repository & HITL state machine
 │   ├── tools/                   # Strict Pydantic schemas & 6 airline recovery tools
-│   └── web/                     # Bilingual (EN/ES) SkyCare Operations Desk UI (HTML/CSS/JS)
+│   └── web/                     # Bilingual (EN/ES) SkyCare Passenger (/) & Supervisor (/supervisor) UIs
 ├── deployment/terraform/        # Single-project and CI/CD (WIF) Terraform IaC (no BigQuery)
 ├── docs/                        # Architecture, AgentOps Matrix, Security, Deployment, Demo guides
 ├── tests/

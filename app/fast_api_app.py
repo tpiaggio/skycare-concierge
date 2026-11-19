@@ -38,6 +38,7 @@ from app.app_utils.a2a import attach_a2a_routes
 from app.core.config import get_settings
 from app.memory.async_memory import get_memory_coordinator
 from app.observability.logging import (
+    clear_audit_events,
     configure_structured_logging,
     get_audit_events,
     log_intent_and_outcome,
@@ -225,8 +226,13 @@ if WEB_DIR.is_dir():
     @app.get("/", include_in_schema=False)
     @app.get("/ui", include_in_schema=False)
     def serve_skycare_ui() -> FileResponse:
-        """Serve the SkyCare Operations & Passenger Recovery Web UI."""
+        """Serve the SkyCare Passenger Concierge Web UI."""
         return FileResponse(WEB_DIR / "index.html")
+
+    @app.get("/supervisor", include_in_schema=False)
+    def serve_supervisor_ui() -> FileResponse:
+        """Serve the SkyCare Airline Supervisor Desk Web UI."""
+        return FileResponse(WEB_DIR / "supervisor.html")
 
 
 @app.get("/api/status")
@@ -314,6 +320,19 @@ def list_audit_events(
 ) -> list[dict[str, Any]]:
     """Return recent PII-redacted intent-vs-outcome structured audit logs."""
     return get_audit_events(limit=limit)
+
+
+@app.post("/api/demo/reset")
+def reset_demo_state() -> dict[str, Any]:
+    """Reset seeded flights, PNRs, approvals, vouchers, and in-memory audit logs."""
+    repo = get_repository()
+    repo.reset_demo_data()
+    clear_audit_events()
+    return {
+        "status": "reset",
+        "disruptions_count": len(repo.list_disruptions()),
+        "approvals_count": 0,
+    }
 
 
 # Main execution

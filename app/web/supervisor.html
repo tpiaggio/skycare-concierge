@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkyCare Supervisor Desk · Airline Operations</title>
+  <link rel="stylesheet" href="/skycare-assets/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark brand-mark-ops" aria-hidden="true">OP</div>
+      <div>
+        <h1 class="brand-title" data-i18n="brandTitle">SkyCare Supervisor Desk</h1>
+        <p class="brand-subtitle" data-i18n="subtitle">Airline Escalation Queue</p>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <select id="langSelect" class="lang-select" aria-label="Language">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+      </select>
+      <span id="pendingBadge" class="pill pill-mint" data-i18n="pendingZero">0 Pending</span>
+      <button id="resetDemoBtn" class="btn btn-quiet" type="button" data-i18n="resetDemo">
+        Reset sample flights
+      </button>
+    </div>
+  </header>
+
+  <main class="supervisor-shell">
+    <div id="resetToast" class="toast-banner" role="status" hidden></div>
+
+    <section aria-label="Escalated Conversations">
+      <div class="section-header">
+        <h2 class="section-title" data-i18n="escalationsHeading">Escalated Conversations</h2>
+      </div>
+      <div id="pendingList" class="stack"></div>
+    </section>
+
+    <section id="resolvedSection" aria-label="Recent Decisions" hidden>
+      <div class="section-header">
+        <h2 class="section-title" data-i18n="resolvedHeading">Recent Decisions</h2>
+      </div>
+      <div id="resolvedList" class="stack"></div>
+    </section>
+
+    <section aria-label="System Safeguards">
+      <div class="section-header">
+        <h2 class="section-title" data-i18n="safeguardsHeading">System Safeguards</h2>
+      </div>
+
+      <div id="safeguardsCard" class="safeguards-card">
+        <div class="safeguard-row">
+          <div>
+            <div class="safeguard-label" data-i18n="capLabel">Voucher Auto-Approval Cap</div>
+            <div id="capDetail" class="safeguard-detail">Auto-issues up to $150; higher amounts require supervisor review.</div>
+          </div>
+          <span id="capPill" class="pill pill-slate">$150</span>
+        </div>
+
+        <div class="safeguard-row">
+          <div>
+            <div class="safeguard-label" data-i18n="piiLabel">PII Redaction Shield</div>
+            <div id="piiDetail" class="safeguard-detail">Masks payment cards, passports, emails, and phones in audit logs.</div>
+          </div>
+          <span id="piiPill" class="pill pill-neutral" data-i18n="statusActive">Active</span>
+        </div>
+
+        <div class="safeguard-row">
+          <div>
+            <div class="safeguard-label" data-i18n="guardrailLabel">Prompt Injection Guardrail</div>
+            <div id="guardrailDetail" class="safeguard-detail">Screens override and policy-bypass attempts before tool execution.</div>
+          </div>
+          <span id="guardrailPill" class="pill pill-neutral" data-i18n="statusActive">Active</span>
+        </div>
+      </div>
+
+      <details id="auditDetails" class="audit-details">
+        <summary id="auditSummary" data-i18n="auditSummaryDefault">Sanitized audit log (0)</summary>
+        <div id="auditList" class="audit-list"></div>
+      </details>
+    </section>
+  </main>
+
+  <script src="/skycare-assets/common.js" defer></script>
+  <script src="/skycare-assets/supervisor.js" defer></script>
+</body>
+</html>
