@@ -67,18 +67,16 @@ class SkyCareSettings(BaseModel):
     root_agent_name: str = "skycare_concierge"
     service_name: str = "skycare-concierge"
 
-    # Verified live Gemini 3.x models for strategic tier routing:
+    # Verified live Gemini models on location="global" for strategic tier routing:
     # - flash_model: high-throughput coordinator, triage, guardrails, summarizer
-    # - pro_model: deep multi-leg disruption & optimization planner
+    # - pro_model: Gemini 4 Carbon deep multi-leg disruption & optimization planner
     flash_model: str = Field(
         default_factory=lambda: os.environ.get(
             "SKYCARE_FLASH_MODEL", "gemini-3.8-flash"
         )
     )
     pro_model: str = Field(
-        default_factory=lambda: os.environ.get(
-            "SKYCARE_PRO_MODEL", "gemini-3.1-pro-preview"
-        )
+        default_factory=lambda: os.environ.get("SKYCARE_PRO_MODEL", "gemini-4-carbon")
     )
     lite_model: str = Field(
         default_factory=lambda: os.environ.get("SKYCARE_LITE_MODEL", "gemini-3.5-flash")

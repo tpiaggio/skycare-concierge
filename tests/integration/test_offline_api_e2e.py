@@ -52,7 +52,7 @@ def test_offline_fastapi_ui_hitl_and_a2a_endpoints(
         assert status_resp.status_code == 200
         status_json = status_resp.json()
         assert status_json["flash_model"] == "gemini-3.8-flash"
-        assert status_json["pro_model"] == "gemini-3.1-pro-preview"
+        assert status_json["pro_model"] == "gemini-4-carbon"
 
         disruptions = client.get("/api/disruptions")
         assert disruptions.status_code == 200

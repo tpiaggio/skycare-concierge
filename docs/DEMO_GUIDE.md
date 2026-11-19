@@ -20,7 +20,7 @@ The SQLite `ReservationRepository` (`app/storage/repository.py`) seeds four dete
 1. Select `elena_gold (SKY842)` in the top bar and click the quick chip **SKY842 · EU261 + Pro Planner**.
 2. **Observed Flow**:
    - `skycare_concierge` (`gemini-3.8-flash`) looks up `SKY842` and delegates regulatory inspection (`disruption_triage_agent` / Flash) -> confirms EUR 600 UK/EU261 cash compensation eligibility, `$220` hotel allowance, `$45` meal allowance, and involuntary fare waiver.
-   - For itinerary trade-offs, it delegates to `recovery_planner_agent` (`gemini-3.1-pro-preview`) -> evaluates nonstop `SC408` (`JFK -> ZRH`) vs 1-stop `SC410 -> SC822` (`JFK -> CDG -> ZRH`) and `SC404 -> SC814` (`JFK -> LHR -> ZRH`), recommending nonstop `SC408` with zero misconnect risk and aisle/vegetarian preference fit.
+   - For itinerary trade-offs, it delegates to `recovery_planner_agent` (`gemini-4-carbon`) -> evaluates nonstop `SC408` (`JFK -> ZRH`) vs 1-stop `SC410 -> SC822` (`JFK -> CDG -> ZRH`) and `SC404 -> SC814` (`JFK -> LHR -> ZRH`), recommending nonstop `SC408` with zero misconnect risk and aisle/vegetarian preference fit.
 3. Ask: *"Book Elena on SC408 with an aisle seat and waived fare difference."*
    - `passenger_care_agent` calls `execute_passenger_rebooking` -> pauses cleanly and returns `status="awaiting_confirmation"` with `approval_id` (`APR-...`).
 4. In the right-hand **HITL Approval Drawer**, click **Approve** -> repeat the confirmation prompt in chat -> the agent consumes the single-use approval (`APPROVED -> CONSUMED`) and issues confirmation `RBK-...`.

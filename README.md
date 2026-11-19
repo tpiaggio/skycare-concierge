@@ -2,13 +2,13 @@
 
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%E2%80%933.13-blue.svg)](pyproject.toml)
 [![Google ADK](https://img.shields.io/badge/Google-ADK-orange.svg)](https://google.github.io/adk-docs/)
-[![Models](https://img.shields.io/badge/Gemini-3.8%20Flash%20%26%203.1%20Pro-purple.svg)](app/core/config.py)
+[![Models](https://img.shields.io/badge/Gemini-3.8%20Flash%20%26%204%20Carbon-purple.svg)](app/core/config.py)
 [![A2A Protocol](https://img.shields.io/badge/A2A-JSON--RPC%200.3%2F1.0-green.svg)](app/app_utils/a2a.py)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 **Problem.** Airline irregular operations (IRROPS) force disruption desk agents to cross-reference delayed flights, EU261/UK261/US DOT compensation law, multi-leg rebooking connections, passenger loyalty preferences, and voucher spend caps under time pressure — where hallucinated compensation, PII leaks, or unauthorized rebookings create immediate financial and regulatory liability.
 
-**Solution.** **SkyCare Concierge** is an enterprise multi-agent AI **Airline Disruption & Passenger Recovery Desk** built on **Google ADK**, **Vertex AI Gemini 3.x (`gemini-3.8-flash` & `gemini-3.1-pro-preview`)**, **Vertex AI Agent Platform (`agent_platform_sessions` & Memory Bank)**, **FastAPI**, and **A2A**. It pairs Flash triage/care agents with a Pro multi-leg recovery planner behind deterministic code policy checks, runtime prompt-injection guardrails, PII redaction, and single-use Human-in-the-Loop (HITL) supervisor approvals.
+**Solution.** **SkyCare Concierge** is an enterprise multi-agent AI **Airline Disruption & Passenger Recovery Desk** built on **Google ADK**, **Vertex AI Gemini (`gemini-3.8-flash` & `gemini-4-carbon`)**, **Vertex AI Agent Platform (`agent_platform_sessions` & Memory Bank)**, **FastAPI**, and **A2A**. It pairs Flash triage/care agents with a Gemini 4 Carbon multi-leg recovery planner behind deterministic code policy checks, runtime prompt-injection guardrails, PII redaction, and single-use Human-in-the-Loop (HITL) supervisor approvals.
 
 ---
 
@@ -22,7 +22,7 @@ flowchart TD
     API -->|"Orchestration (Flash: gemini-3.8-flash)"| Coord["skycare_concierge (Root Coordinator)"]
 
     Coord -->|"Triage & Law"| Triage["disruption_triage_agent (Flash)"]
-    Coord -->|"Multi-Leg Trade-Offs"| Planner["recovery_planner_agent (Pro: gemini-3.1-pro-preview)"]
+    Coord -->|"Multi-Leg Trade-Offs"| Planner["recovery_planner_agent (Pro: gemini-4-carbon)"]
     Coord -->|"Vouchers & Rebooking"| Care["passenger_care_agent (Flash)"]
 
     Triage & Planner & Care -->|"Strict Pydantic Tools"| Repo[("ReservationRepository (WAL SQLite + GCS Snapshot)")]
@@ -43,7 +43,7 @@ flowchart TD
 | --- | --- | --- |
 | `skycare_concierge` | `gemini-3.8-flash` | Root coordinator, `PreloadMemoryTool` preference recall, delegation, compaction (`24k` token threshold), and context caching (`2048` min tokens) |
 | `disruption_triage_agent` | `gemini-3.8-flash` | PNR lookup (`lookup_passenger_reservation`) and deterministic EU261 / UK261 / US DOT calculation (`check_eu261_dot_compensation_eligibility`) |
-| `recovery_planner_agent` | `gemini-3.1-pro-preview` | Deep multi-leg alternate scoring (`search_alternate_itineraries`, `calculate_rebooking_options`) factoring MCT, arrival deadlines, and cabin/seat preferences |
+| `recovery_planner_agent` | `gemini-4-carbon` | Deep multi-leg alternate scoring (`search_alternate_itineraries`, `calculate_rebooking_options`) factoring MCT, arrival deadlines, and cabin/seat preferences |
 | `passenger_care_agent` | `gemini-3.8-flash` | Policy-gated fulfillment (`issue_hotel_meal_voucher`, `execute_passenger_rebooking`) |
 | **HITL Policy & Replay Defense** | Pure code (`repository.py` + ADK) | Auto-approves vouchers `<= $150.00`; blocks vouchers `> $150.00` and all PNR rebookings until supervisor approval (`APPROVED -> CONSUMED`, `409 Conflict` on replay) |
 | **Runtime Guardrails Plugin** | `SkyCareGuardrailsPlugin` | Regex + Flash `PromptSafetyVerdict` injection screening, automatic `is_user_prompt_safe` reset to prevent session poisoning, and recursive secret/SSN/passport/Luhn-card masking |

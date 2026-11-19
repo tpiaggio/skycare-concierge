@@ -54,7 +54,7 @@ def test_multi_agent_architecture_and_strategic_model_routing() -> None:
     assert root_agent.name == "skycare_concierge"
     assert _agent_model_id(root_agent.model) == "gemini-3.8-flash"
     assert _agent_model_id(disruption_triage_agent.model) == "gemini-3.8-flash"
-    assert _agent_model_id(recovery_planner_agent.model) == "gemini-3.1-pro-preview"
+    assert _agent_model_id(recovery_planner_agent.model) == "gemini-4-carbon"
     assert _agent_model_id(passenger_care_agent.model) == "gemini-3.8-flash"
     assert adk_app.events_compaction_config is not None
     assert adk_app.events_compaction_config.token_threshold == 24000

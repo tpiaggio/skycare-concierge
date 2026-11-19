@@ -1,6 +1,6 @@
 # SkyCare Concierge Architecture
 
-SkyCare Concierge (`skycare-concierge`) is an enterprise multi-agent airline disruption & passenger recovery platform built on Google ADK (`google-adk`), Vertex AI Gemini 3.x models, Vertex AI Agent Platform (`agent_platform_sessions` + Memory Bank), FastAPI, and A2A (Agent2Agent).
+SkyCare Concierge (`skycare-concierge`) is an enterprise multi-agent airline disruption & passenger recovery platform built on Google ADK (`google-adk`), Vertex AI Gemini (`gemini-3.8-flash` & `gemini-4-carbon`), Vertex AI Agent Platform (`agent_platform_sessions` + Memory Bank), FastAPI, and A2A (Agent2Agent).
 
 ## 1. System Topology & Strategic Model Routing
 
@@ -14,7 +14,7 @@ flowchart TB
     Guard --> Root["Coordinator: skycare_concierge (gemini-3.8-flash)"]
 
     Root -->|"PNR & Regulatory Triage"| Triage["disruption_triage_agent (gemini-3.8-flash)"]
-    Root -->|"Multi-Leg Route Optimization"| Planner["recovery_planner_agent (gemini-3.1-pro-preview)"]
+    Root -->|"Multi-Leg Route Optimization"| Planner["recovery_planner_agent (gemini-4-carbon)"]
     Root -->|"HITL-Gated Vouchers & Rebooking"| Care["passenger_care_agent (gemini-3.8-flash)"]
 
     Root -.->|"PreloadMemoryTool + AfterAgent Async PII-Filtered Sync"| Mem["AsyncMemoryCoordinator + Agent Platform Memory Bank"]
@@ -27,13 +27,13 @@ flowchart TB
 
 ### Model Tier Selection Rationale
 
-All models run against Vertex AI `location="global"` where Gemini 3.x publisher models are hosted, while the regional Agent Engine runtime hosts `agent_platform_sessions` and Memory Bank in `us-east1`:
+All models run against Vertex AI `location="global"` where Gemini 3.8 Flash and Gemini 4 Carbon publisher models are hosted, while the regional Agent Engine runtime hosts `agent_platform_sessions` and Memory Bank in `us-east1`:
 
 | Component | Model / Setting | Tier | Responsibility |
 | --- | --- | --- | --- |
 | `skycare_concierge` | `gemini-3.8-flash` | Flash | Low-latency orchestration, intent classification, memory preloading, and direct PNR lookups |
 | `disruption_triage_agent` | `gemini-3.8-flash` | Flash | Disruption cause synthesis and deterministic EU261 / UK261 / US DOT verification |
-| `recovery_planner_agent` | `gemini-3.1-pro-preview` | Pro | Multi-leg connection risk reasoning, arrival trade-offs, fare-waiver scoring, preference fit |
+| `recovery_planner_agent` | `gemini-4-carbon` | Pro / Frontier | Multi-leg connection risk reasoning, arrival trade-offs, fare-waiver scoring, preference fit |
 | `passenger_care_agent` | `gemini-3.8-flash` | Flash | Strict schema validation, duty-of-care voucher issuance, and HITL-gated PNR commits |
 | Prompt Safety Judge | `gemini-3.8-flash` (`temperature=0.0`) | Flash | Secondary semantic screening (`PromptSafetyVerdict`) after deterministic regex rules |
 | Context Compaction | `LlmEventSummarizer` (`gemini-3.8-flash`) | Flash | Incremental summarization past `24000` tokens retaining last `6` events |

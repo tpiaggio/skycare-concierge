@@ -82,7 +82,7 @@ def build_recovery_planner_agent() -> Agent:
             retry_options=_retry_options(),
         ),
         description=(
-            "Strategic Pro-tier optimization planner (`gemini-3.1-pro-preview`). Delegate here "
+            "Strategic Pro-tier optimization planner (`gemini-4-carbon`). Delegate here "
             "to evaluate alternate nonstop and multi-leg itineraries, weigh connection "
             "misconnect risks, align with remembered seat/meal preferences, and compute "
             "ranked recovery options."

@@ -8,7 +8,7 @@
 - **Target GCP Project**: e.g., `your-gcp-project-id` with billing enabled and Vertex AI API active
 
 > **Model Location vs. Runtime Region**:
-> Gemini 3.x models (`gemini-3.8-flash` and `gemini-3.1-pro-preview`) run on `GOOGLE_CLOUD_LOCATION=global`, while Cloud Run and the Agent Platform Session/Memory Bank runtime run regionally in `us-east1` (`agent_runtime_location()`).
+> Gemini models (`gemini-3.8-flash` and `gemini-4-carbon`) run on `GOOGLE_CLOUD_LOCATION=global`, while Cloud Run and the Agent Platform Session/Memory Bank runtime run regionally in `us-east1` (`agent_runtime_location()`).
 
 ## 2. Local Development Environment
 
