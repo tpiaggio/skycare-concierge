@@ -23,12 +23,14 @@ from google.adk.apps.app import EventsCompactionConfig
 from google.adk.apps.llm_event_summarizer import LlmEventSummarizer
 from google.adk.models import Gemini
 from google.adk.tools.preload_memory_tool import PreloadMemoryTool
-from google.genai import types
 
 from app.agents.specialists import (
     build_disruption_triage_agent,
     build_passenger_care_agent,
     build_recovery_planner_agent,
+    build_stream_gemini,
+    low_thinking_planner,
+    prewarm_pnr_context_callback,
 )
 from app.core.config import get_settings
 from app.memory.async_memory import after_agent_memory_callback
@@ -53,35 +55,38 @@ root_agent = Agent(
     # telemetry reports this name as gen_ai.agent.name, and agents-cli reports the
     # manifest's value.
     name=_settings.root_agent_name,
-    model=Gemini(
+    model=build_stream_gemini(
         model=MODEL,
-        retry_options=types.HttpRetryOptions(attempts=3),
+        fallback_model=_settings.lite_model,
     ),
+    planner=low_thinking_planner(),
     description=(
         "Enterprise Airline Disruption & Passenger Recovery Coordinator. Orchestrates "
-        "Flash triage, Pro multi-leg optimization, and HITL-gated fulfillment."
+        "Flash triage, Gemini 4 multi-leg optimization, and HITL-gated fulfillment."
     ),
     static_instruction=(
         "You are SkyCare Concierge, an enterprise airline disruption & passenger recovery "
         "operations coordinator.\n\n"
         "Core Operating Constitution:\n"
-        "1. Strategic Delegation Policy:\n"
+        "1. Strategic Delegation Policy (Zero-Redundancy):\n"
+        "   - Check `Pre-fetched PNR context` first: when it already contains the requested "
+        "PNR's `reservation`, `compensation`, and `rebooking_options`, NEVER re-call "
+        "`lookup_passenger_reservation`, `check_eu261_dot_compensation_eligibility`, or "
+        "`calculate_rebooking_options`.\n"
         "   - When the user asks ONLY for PNR checks, flight disruption causes, or EU261/DOT "
-        "compensation checks (without asking for alternate flights or rebooking plans), "
-        "use `lookup_passenger_reservation` directly or delegate to `disruption_triage_agent` (Flash).\n"
+        "compensation checks (without asking for alternate flights or rebooking plans): answer "
+        "directly from `Pre-fetched PNR context` (or call `lookup_passenger_reservation` / "
+        "`check_eu261_dot_compensation_eligibility` only if that PNR is missing).\n"
         "   - For multi-leg route comparisons, missed connections, fare waivers, finding optimal "
         "alternate itineraries, OR compound requests asking for both compensation eligibility and "
-        "alternate/nonstop rebooking options: if PNR, compensation, and rebooking options for this "
-        "turn are not yet in context, first call `lookup_passenger_reservation`, "
-        "`check_eu261_dot_compensation_eligibility`, and `calculate_rebooking_options` in parallel "
-        "once so all itinerary scores and EU261/DOT details are populated fast, THEN immediately "
-        "delegate to `recovery_planner_agent` (Pro) to evaluate trade-offs and present the "
-        "recommendation.\n"
-        "   - For committing PNR rebookings or issuing hotel/meal/ground vouchers, delegate "
-        "to `passenger_care_agent` (HITL-gated fulfillment).\n"
+        "alternate/nonstop rebooking options: immediately delegate to `recovery_planner_agent` "
+        "(without pre-calling read-only lookup tools when `Pre-fetched PNR context` already has "
+        "that PNR loaded).\n"
+        "   - For committing PNR rebookings or issuing hotel/meal/ground vouchers, immediately "
+        "delegate to `passenger_care_agent` (HITL-gated fulfillment).\n"
         "2. Grounding & Tool Integrity:\n"
         "   - Never invent flight numbers, PNRs, confirmation codes, voucher IDs, or approval IDs. "
-        "Every operational fact MUST come from tool responses.\n"
+        "Every operational fact MUST come from Pre-fetched PNR context or tool responses.\n"
         "   - When tools return `status='error'`, follow `recovery_hint` or ask the passenger "
         "clearly for missing information.\n"
         "   - When fulfillment tools return `status='awaiting_confirmation'`, surface the exact "
@@ -101,7 +106,8 @@ root_agent = Agent(
         "Assist the passenger or airline desk operator calmly and empathetically in their active "
         "language (English or Spanish). "
         "Current session state -> PNR: {active_pnr?}, Route: {active_origin?}->{active_destination?}, "
-        "Recommended option: {recommended_itinerary_id?}."
+        "Recommended option: {recommended_itinerary_id?}. "
+        "Pre-fetched PNR context: {prefetched_pnr_context?}."
     ),
     tools=[
         PreloadMemoryTool(),
@@ -114,6 +120,7 @@ root_agent = Agent(
         recovery_planner_agent,
         passenger_care_agent,
     ],
+    before_agent_callback=prewarm_pnr_context_callback,
     after_agent_callback=after_agent_memory_callback,
 )
 

@@ -52,7 +52,7 @@ def test_offline_fastapi_ui_hitl_and_a2a_endpoints(
         assert status_resp.status_code == 200
         status_json = status_resp.json()
         assert status_json["flash_model"] == "gemini-3.8-flash"
-        assert status_json["pro_model"] == "gemini-4-carbon"
+        assert status_json["pro_model"] == "gemini-4-hydrogen"
 
         disruptions = client.get("/api/disruptions")
         assert disruptions.status_code == 200
@@ -120,7 +120,7 @@ def test_offline_fastapi_ui_hitl_and_a2a_endpoints(
         js = client.get("/skycare-assets/app.js")
         assert js.status_code == 200
         assert "Bandeja de Aprobación HITL" in js.text
-        assert "Pro 4 (Carbon)" in js.text
+        assert "Gemini 4 · Hydrogen" in js.text
         assert "Intl.NumberFormat" in js.text
         assert "callingTools" in js.text
         assert "interruptedReply" in js.text
@@ -128,4 +128,4 @@ def test_offline_fastapi_ui_hitl_and_a2a_endpoints(
 
         status = client.get("/api/status")
         assert status.status_code == 200
-        assert status.json()["pro_model"] == "gemini-4-carbon"
+        assert status.json()["pro_model"] == "gemini-4-hydrogen"

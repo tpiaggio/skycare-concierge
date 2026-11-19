@@ -34,7 +34,7 @@
       queueNote: "Active bookings backed by SQLite + GCS.",
       consoleTitle: "Recovery Assistant",
       flashLegend: "Flash 3.8 · Triage & Care",
-      proLegend: "Pro 4 · Multi-Leg Planner",
+      proLegend: "Gemini 4 · Planner",
       welcomeTitle: "Ready to assist with flight disruptions",
       welcomeBody:
         "Choose a quick scenario above, select a flight on the right, or type any PNR question in English or Spanish.",
@@ -61,6 +61,7 @@
         `Inspect PNR ${pnr} (${name}), check regulatory compensation eligibility, and summarize recovery options.`,
       actionExposure: (action, exposure) => `${action} · Exposure: ${exposure}`,
       thinking: "Routing request...",
+      planningRoutes: "Planning optimal recovery routes...",
       callingTools: (agent, tools) =>
         `${agent}: running ${tools.join(", ")}...`,
       interruptedReply:
@@ -86,7 +87,7 @@
       },
       chips: {
         chipSky842: {
-          label: "SKY842 · EU261 + Pro Planner",
+          label: "SKY842 · EU261 + Planner",
           prompt:
             "Look up PNR SKY842, check EU261 compensation eligibility, and plan the best rebooking options for Elena.",
         },
@@ -124,7 +125,7 @@
       queueNote: "Reservas activas respaldadas en SQLite + GCS.",
       consoleTitle: "Asistente de Recuperación",
       flashLegend: "Flash 3.8 · Triaje y Asistencia",
-      proLegend: "Pro 4 · Planificador",
+      proLegend: "Gemini 4 · Planificador",
       welcomeTitle: "Listo para ayudar con disrupciones de vuelo",
       welcomeBody:
         "Elige un escenario rápido arriba, selecciona un vuelo a la derecha o escribe cualquier consulta en español o inglés.",
@@ -151,6 +152,7 @@
         `Consulta el PNR ${pnr} (${name}), verifica su compensación regulatoria y resume las opciones de recuperación.`,
       actionExposure: (action, exposure) => `${action} · Monto: ${exposure}`,
       thinking: "Enrutando solicitud...",
+      planningRoutes: "Planificando rutas óptimas de recuperación...",
       callingTools: (agent, tools) =>
         `${agent}: ejecutando ${tools.join(", ")}...`,
       interruptedReply:
@@ -184,7 +186,7 @@
       },
       chips: {
         chipSky842: {
-          label: "SKY842 · EU261 + Planificador Pro",
+          label: "SKY842 · EU261 + Planificador",
           prompt:
             "Consulta el PNR SKY842, verifica la compensación EU261 y planifica las mejores opciones de reprogramación para Elena.",
         },
@@ -226,7 +228,7 @@
     activeTab: "flights",
     sending: false,
     flashModel: "gemini-3.8-flash",
-    proModel: "gemini-4-carbon",
+    proModel: "gemini-4-hydrogen",
     voucherLimitUsd: 150,
     runtimeHealthy: null,
     disruptions: [],
@@ -306,9 +308,10 @@
 
   function formatModelBadge(isPro) {
     const raw = isPro ? state.proModel : state.flashModel;
+    if (raw === "gemini-4-hydrogen") return "Gemini 4 · Hydrogen";
     if (raw === "gemini-4-carbon") return "Pro 4 (Carbon)";
     if (raw === "gemini-3.8-flash") return "Flash 3.8";
-    return raw || (isPro ? "Pro" : "Flash");
+    return raw || (isPro ? "Gemini 4" : "Flash");
   }
 
   function setActiveTab(tabName) {
@@ -831,6 +834,10 @@
           ].join("\n\n");
           if (renderedText) {
             renderFormattedText(pendingNode.body, renderedText);
+          } else if (activeAuthor === "recovery_planner_agent") {
+            pendingNode.body.replaceChildren(
+              el("div", "status-line", dict.planningRoutes)
+            );
           } else if (toolsSet.size > 0) {
             pendingNode.body.replaceChildren(
               el("div", "status-line", dict.callingTools(activeAuthor, Array.from(toolsSet)))

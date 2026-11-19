@@ -1,7 +1,7 @@
 [project]
 name = "skycare-concierge"
 version = "0.1.0"
-description = "Enterprise AI Airline Disruption & Passenger Recovery Desk powered by Google ADK, Gemini 3.8 Flash & 4 Carbon, and Agent Platform"
+description = "Enterprise AI Airline Disruption & Passenger Recovery Desk powered by Google ADK, Gemini 3.8 Flash & 4 Hydrogen, and Agent Platform"
 authors = [
     {name = "SkyCare Concierge Contributors"},
 ]
