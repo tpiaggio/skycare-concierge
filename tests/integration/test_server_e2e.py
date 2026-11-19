@@ -245,22 +245,27 @@ def test_agent_card(server_fixture: subprocess.Popen[str]) -> None:
 
 @pytest.fixture(scope="session", autouse=True)
 def cleanup_agent_runtime_sessions() -> None:
-    """Cleanup Agent Runtime sessions created during tests."""
+    """Cleanup isolated test Agent Runtime sessions only when explicitly requested."""
     yield  # Run tests first
 
-    # Cleanup after tests complete
+    # start_server() runs with USE_IN_MEMORY_SESSION=true; never delete the shared
+    # production 'skycare-concierge' Agent Runtime from local or CI test runs.
+    if os.environ.get("CLEANUP_TEST_AGENT_RUNTIME", "").lower() not in (
+        "true",
+        "1",
+        "yes",
+    ):
+        return
+
+    agent_name = os.environ.get("AGENT_ENGINE_SESSION_NAME", "").strip()
+    if not agent_name or agent_name == "skycare-concierge":
+        return
+
     import agentplatform
 
-    from app.app_utils.services import (
-        agent_runtime_location,
-    )
+    from app.app_utils.services import agent_runtime_location
 
     try:
-        # Use same environment variable as server, default to project name
-        default_agent_name = "skycare-concierge"
-        agent_name = os.environ.get("AGENT_ENGINE_SESSION_NAME", default_agent_name)
-
-        # Find and delete Agent Runtimes with this name
         client = agentplatform.Client(location=agent_runtime_location())
         existing_agents = list(
             client.runtimes.list(config={"filter": f"display_name={agent_name}"})
@@ -270,8 +275,8 @@ def cleanup_agent_runtime_sessions() -> None:
             name = agent_runtime.api_resource.name
             try:
                 client.runtimes.delete(name=name, force=True)
-                logger.info(f"Cleaned up Agent Runtime: {name}")
+                logger.info(f"Cleaned up test Agent Runtime: {name}")
             except Exception as e:
-                logger.warning(f"Failed to cleanup Agent Runtime {name}: {e}")
+                logger.warning(f"Failed to cleanup test Agent Runtime {name}: {e}")
     except Exception as e:
         logger.warning(f"Failed to cleanup Agent Runtime sessions: {e}")
