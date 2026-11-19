@@ -89,7 +89,7 @@ class SkyCareSettings(BaseModel):
     # Context compaction & caching configuration
     compaction_token_threshold: int = 24000
     compaction_retention_size: int = 6
-    context_cache_min_tokens: int = 2048
+    context_cache_min_tokens: int = 16384
     context_cache_ttl_seconds: int = 1800
 
     # Cloud & storage configuration (Option #1: Agent Platform + SQLite/GCS)

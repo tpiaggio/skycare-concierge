@@ -109,12 +109,21 @@ def test_offline_fastapi_ui_hitl_and_a2a_endpoints(
         home = client.get("/")
         assert home.status_code == 200
         assert "langSelect" in home.text
+        assert "tabBtnFlights" in home.text
+        assert "tabBtnApprovals" in home.text
+        assert "tabBtnActivity" in home.text
+
+        css = client.get("/skycare-assets/styles.css")
+        assert css.status_code == 200
+        assert "#f6f8fc" in css.text
 
         js = client.get("/skycare-assets/app.js")
         assert js.status_code == 200
         assert "Bandeja de Aprobación HITL" in js.text
         assert "Pro 4 (Carbon)" in js.text
         assert "Intl.NumberFormat" in js.text
+        assert "callingTools" in js.text
+        assert "interruptedReply" in js.text
         assert "Pro 3.1" not in js.text
 
         status = client.get("/api/status")

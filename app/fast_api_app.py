@@ -16,10 +16,11 @@
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import logging
 import os
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from pathlib import Path
 from typing import Any
 
@@ -118,6 +119,97 @@ app.description = (
     "Enterprise AI Airline Disruption & Passenger Recovery Desk "
     "(ADK Multi-Agent + A2A + HITL + Memory Bank)"
 )
+
+
+class SSEKeepaliveMiddleware:
+    """Emit periodic SSE comments on /run_sse so Cloud Run/IAP never drops slow Pro turns."""
+
+    def __init__(
+        self,
+        asgi_app: Callable[..., Awaitable[None]],
+        *,
+        interval_seconds: float = 8.0,
+        max_keepalive_seconds: float = 240.0,
+    ) -> None:
+        self.asgi_app = asgi_app
+        self.interval_seconds = interval_seconds
+        self.max_keepalive_seconds = max_keepalive_seconds
+
+    async def __call__(
+        self,
+        scope: dict[str, Any],
+        receive: Callable[[], Awaitable[dict[str, Any]]],
+        send: Callable[[dict[str, Any]], Awaitable[None]],
+    ) -> None:
+        if (
+            scope.get("type") != "http"
+            or scope.get("path") != "/run_sse"
+            or scope.get("method") != "POST"
+        ):
+            await self.asgi_app(scope, receive, send)
+            return
+
+        loop = asyncio.get_running_loop()
+        send_lock = asyncio.Lock()
+        sse_active = False
+        finished = False
+        started_at = loop.time()
+        last_activity = started_at
+
+        async def wrapped_send(message: dict[str, Any]) -> None:
+            nonlocal sse_active, finished, last_activity
+            async with send_lock:
+                msg_type = message.get("type")
+                if msg_type == "http.response.start" and message.get("status") == 200:
+                    headers = {
+                        k.lower(): v.lower() for k, v in message.get("headers", [])
+                    }
+                    if b"text/event-stream" in headers.get(b"content-type", b""):
+                        sse_active = True
+                if msg_type == "http.response.body" and not message.get(
+                    "more_body", False
+                ):
+                    finished = True
+                last_activity = loop.time()
+                await send(message)
+
+        async def heartbeat() -> None:
+            nonlocal last_activity
+            sleep_step = min(2.0, max(0.05, self.interval_seconds / 2.0))
+            while not finished:
+                await asyncio.sleep(sleep_step)
+                now = loop.time()
+                if not sse_active or finished:
+                    continue
+                if now - started_at >= self.max_keepalive_seconds:
+                    return
+                if now - last_activity < self.interval_seconds:
+                    continue
+                async with send_lock:
+                    if not sse_active or finished:
+                        return
+                    try:
+                        await send(
+                            {
+                                "type": "http.response.body",
+                                "body": b": keepalive\n\n",
+                                "more_body": True,
+                            }
+                        )
+                        last_activity = loop.time()
+                    except Exception:
+                        return
+
+        heartbeat_task = asyncio.create_task(heartbeat())
+        try:
+            await self.asgi_app(scope, receive, wrapped_send)
+        finally:
+            finished = True
+            heartbeat_task.cancel()
+            await asyncio.gather(heartbeat_task, return_exceptions=True)
+
+
+app.add_middleware(SSEKeepaliveMiddleware, interval_seconds=8.0)
 
 # Serve custom SkyCare Web UI at '/' and '/ui' while preserving ADK UI at '/dev-ui/'
 if WEB_DIR.is_dir():

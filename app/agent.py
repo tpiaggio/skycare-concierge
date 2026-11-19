@@ -33,7 +33,11 @@ from app.agents.specialists import (
 from app.core.config import get_settings
 from app.memory.async_memory import after_agent_memory_callback
 from app.plugins.safety_guardrails import SkyCareGuardrailsPlugin
-from app.tools.airline_tools import lookup_passenger_reservation
+from app.tools.airline_tools import (
+    calculate_rebooking_options,
+    check_eu261_dot_compensation_eligibility,
+    lookup_passenger_reservation,
+)
 
 _settings = get_settings()
 
@@ -67,7 +71,12 @@ root_agent = Agent(
         "use `lookup_passenger_reservation` directly or delegate to `disruption_triage_agent` (Flash).\n"
         "   - For multi-leg route comparisons, missed connections, fare waivers, finding optimal "
         "alternate itineraries, OR compound requests asking for both compensation eligibility and "
-        "alternate/nonstop rebooking options, delegate to `recovery_planner_agent` (Pro).\n"
+        "alternate/nonstop rebooking options: if PNR, compensation, and rebooking options for this "
+        "turn are not yet in context, first call `lookup_passenger_reservation`, "
+        "`check_eu261_dot_compensation_eligibility`, and `calculate_rebooking_options` in parallel "
+        "once so all itinerary scores and EU261/DOT details are populated fast, THEN immediately "
+        "delegate to `recovery_planner_agent` (Pro) to evaluate trade-offs and present the "
+        "recommendation.\n"
         "   - For committing PNR rebookings or issuing hotel/meal/ground vouchers, delegate "
         "to `passenger_care_agent` (HITL-gated fulfillment).\n"
         "2. Grounding & Tool Integrity:\n"
@@ -97,6 +106,8 @@ root_agent = Agent(
     tools=[
         PreloadMemoryTool(),
         lookup_passenger_reservation,
+        check_eu261_dot_compensation_eligibility,
+        calculate_rebooking_options,
     ],
     sub_agents=[
         disruption_triage_agent,
