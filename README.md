@@ -94,13 +94,10 @@ Open:
 # Lint, formatting check, spellcheck, and static type check (ruff, codespell, ty)
 agents-cli lint
 
-# Offline unit + bilingual FastAPI / HITL / A2A E2E tests (16 tests, zero network calls)
+# Offline unit + bilingual FastAPI / HITL / A2A E2E tests (21 tests, zero network calls)
 USE_IN_MEMORY_SESSION=true uv run pytest tests/unit tests/integration/test_offline_api_e2e.py -v
 
-# Live Vertex AI bilingual (EN/ES) integration & A2A tests (5 tests, total 21 pytest cases)
-USE_IN_MEMORY_SESSION=true uv run pytest tests/integration/test_agent.py tests/integration/test_server_e2e.py -v
-
-# Live ADK & FastAPI server integration tests (requires Vertex AI credentials)
+# Live Vertex AI bilingual (EN/ES) integration & A2A tests (5 tests, total 26 pytest cases; requires Vertex AI credentials)
 USE_IN_MEMORY_SESSION=true uv run pytest tests/integration/test_agent.py tests/integration/test_server_e2e.py -v
 
 # Live 9-case bilingual (EN/ES) golden evaluation suite (threshold: custom_response_quality >= 4.0)

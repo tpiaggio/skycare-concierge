@@ -10,8 +10,8 @@ Implemented in `app/security/pii_redactor.py` via `redact_text(text)` and `redac
 | --- | --- | --- | --- |
 | Secret / API / Bearer tokens | Regex (`AIza...`, `Bearer ...`, `sk-...`) | `[REDACTED_SECRET]` | Executed first so keys aren't split by digit rules |
 | Social Security Numbers | `\d{3}-\d{2}-\d{4}` | `[REDACTED_SSN]` | Full mask |
-| Passport Numbers | Contextual regex (`passport is/no/num/number/#/: ...`) | Preserves prefix + `[REDACTED_PASSPORT]` | Avoids false positives on flight numbers |
-| Dates of Birth | Contextual regex (`dob` / `date of birth` / `birth date`) | Preserves prefix + `[REDACTED_DOB]` | Supports ISO and slash formats |
+| Passport Numbers | Contextual regex (`passport`/`pasaporte`/`documento` `is/es/no/num/number/#/: ...`) | Preserves prefix + `[REDACTED_PASSPORT]` | Bilingual EN/ES; avoids false positives on flight numbers |
+| Dates of Birth | Contextual regex (`dob` / `date of birth` / `fecha de nacimiento` `is/es`) | Preserves prefix + `[REDACTED_DOB]` | Supports ISO (`YYYY-MM-DD`) and slash (`DD/MM/YYYY`) formats |
 | Email Addresses | RFC-like email regex | `[REDACTED_EMAIL]` | Full mask |
 | Payment Card Numbers | 13-19 digit candidates verified via `_passes_luhn(...)` | `[REDACTED_CARD:****<last4>]` | Preserves last 4 digits; Luhn spares flight numbers & PNRs |
 | Phone Numbers | International / North American phone regex | `[REDACTED_PHONE]` | Full mask |
@@ -29,7 +29,7 @@ Implemented in `app/plugins/safety_guardrails.py` (`SkyCareGuardrailsPlugin(Base
    - When `is_user_prompt_safe` is `False`, logs a structured warning (`outcome="blocked_policy"`), resets `is_user_prompt_safe = True` so subsequent valid user messages in the same session are not permanently locked out (session-poisoning prevention), and returns an immediate safe refusal response without invoking tools or the planner.
 3. **`before_tool_callback` (Tool Parameter Validation)**:
    - Tracks per-invocation timing in a thread-safe instance map keyed by `(invocation_id, function_call_id)` (avoiding polluting ADK session `State` deltas).
-   - Blocks suspicious tool argument substrings matching `_DANGEROUS_TOOL_ARG_RE` (`SELECT ... FROM`, `DROP TABLE`, `${IFS}`, etc.) with `ToolErrorOutput(error_code="POLICY_BLOCKED_TOOL_ARGS")`.
+   - Blocks suspicious tool argument substrings matching `_DANGEROUS_TOOL_ARG_RE` (`; DROP TABLE`, `../../`, `AIza...`, `Bearer ...`) with `ToolErrorOutput(error_code="POLICY_BLOCKED_TOOL_ARGS")`.
 4. **`after_tool_callback` & `after_model_callback` (Egress PII Scrubbing)**:
    - Recursively scrubs unexpected PII from tool dicts before the model observes them (`redact_payload`) and scrubs outgoing model text parts (`redact_text`) before returning to the user, emitting `pii_redaction` audit events whenever masking occurs.
 

@@ -35,7 +35,8 @@ uv run uvicorn app.fast_api_app:app --host 127.0.0.1 --port 8000
 ```
 
 Available local endpoints:
-- SkyCare Operations Desk UI: `http://127.0.0.1:8000/` and `http://127.0.0.1:8000/ui`
+- SkyCare Passenger Concierge UI (`EN` / `ES`): `http://127.0.0.1:8000/` and `http://127.0.0.1:8000/ui`
+- SkyCare Supervisor Desk UI: `http://127.0.0.1:8000/supervisor`
 - ADK Developer UI: `http://127.0.0.1:8000/dev-ui/`
 - OpenAPI Docs: `http://127.0.0.1:8000/docs`
 - A2A Agent Card & JSON-RPC: `http://127.0.0.1:8000/a2a/app/.well-known/agent-card.json`
@@ -50,7 +51,7 @@ agents-cli lint
 
 ### Offline Unit & API Tests (Zero Network Calls)
 ```bash
-uv run pytest tests/unit tests/integration/test_offline_api_e2e.py -v
+USE_IN_MEMORY_SESSION=true uv run pytest tests/unit tests/integration/test_offline_api_e2e.py -v
 ```
 
 ### Live ADK & Server E2E Tests (Requires Vertex AI ADC)
@@ -59,7 +60,7 @@ USE_IN_MEMORY_SESSION=true uv run pytest tests/integration/test_agent.py tests/i
 ```
 
 ### Golden Evaluation Suite (`tests/eval/`)
-`tests/eval/eval_config.yaml` enforces `thresholds: { custom_response_quality: 4.0 }` over the 7 airline scenarios in `tests/eval/datasets/basic-dataset.json`:
+`tests/eval/eval_config.yaml` enforces `thresholds: { custom_response_quality: 4.0 }` over the `9` bilingual (`EN` / `ES`) airline scenarios in `tests/eval/datasets/basic-dataset.json`:
 
 ```bash
 agents-cli eval run --project your-gcp-project-id --region us-east1 --concurrency 2 --qps 5
@@ -118,7 +119,8 @@ agents-cli deploy --region us-east1
    ```
 
 ### CI/CD Pipeline (GitHub Actions)
-`.github/workflows/` includes three workflow definitions configured with Workload Identity Federation (`deployment/terraform/cicd/wif.tf`):
-1. `.github/workflows/pr_checks.yaml`: Pull request verification workflow.
-2. `.github/workflows/staging.yaml`: Staging pipeline workflow.
-3. `.github/workflows/deploy-to-prod.yaml`: Production deployment workflow.
+`.github/workflows/` includes four workflow definitions (`ci.yaml` offline checks on every push/PR + three WIF-authenticated pipelines paired with `deployment/terraform/cicd/wif.tf`):
+1. `.github/workflows/ci.yaml`: Runs `ruff`, `codespell`, `ty`, offline unit + FastAPI E2E `pytest`, and Terraform `fmt` + `validate`.
+2. `.github/workflows/pr_checks.yaml`: Pull request verification workflow (WIF).
+3. `.github/workflows/staging.yaml`: Staging pipeline workflow (WIF, skipped automatically when WIF vars are unset).
+4. `.github/workflows/deploy-to-prod.yaml`: Production deployment workflow (WIF).

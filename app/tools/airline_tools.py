@@ -1082,7 +1082,7 @@ def execute_passenger_rebooking(
                 message=(
                     f"Irreversible PNR rebooking requires Human-in-the-Loop approval. "
                     f"Created pending approval request {pending.approval_id}. "
-                    "Please approve in the SkyCare Operations Approval Drawer before retrying."
+                    "Please approve in the SkyCare Supervisor Desk (/supervisor) before retrying."
                 ),
             ).model_dump()
             log_intent_and_outcome(

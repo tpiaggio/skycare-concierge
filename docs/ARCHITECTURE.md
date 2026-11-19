@@ -6,7 +6,7 @@ SkyCare Concierge (`skycare-concierge`) is an enterprise multi-agent airline dis
 
 ```mermaid
 flowchart TB
-    UI["SkyCare Operations Web UI (/ and /ui)"] --> API["FastAPI Server (app/fast_api_app.py)"]
+    UI["SkyCare Passenger UI (/ and /ui) + Supervisor Desk (/supervisor)"] --> API["FastAPI Server (app/fast_api_app.py)"]
     ADKUI["ADK Dev UI (/dev-ui/) and SSE (/run_sse)"] --> API
     A2A["External A2A Clients (/a2a/app/)"] --> API
 

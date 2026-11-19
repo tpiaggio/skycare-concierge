@@ -484,7 +484,7 @@ def build_passenger_care_agent() -> Agent:
             "3. Human-in-the-Loop Enforcement: if either tool returns "
             "`status='awaiting_confirmation'`, STOP immediately, do NOT invent an approval, "
             "clearly state the exact `approval_id` (e.g., APR-XXXXXXXX), cost/itinerary, "
-            "and direct the supervisor/operator to approve it in the SkyCare Approval Drawer.\n"
+            "and direct the supervisor/operator to approve it in the SkyCare Supervisor Desk (`/supervisor`).\n"
             "4. If a tool returns `status='rejected'`, communicate the supervisor decision "
             "respectfully and do not retry without a new approved authorization.\n"
             "5. If a tool returns `status='confirmed'` or `status='issued'`, summarize the "
