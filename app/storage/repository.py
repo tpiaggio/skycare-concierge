@@ -625,6 +625,16 @@ class ReservationRepository:
     def search_alternate_itineraries(
         self, origin: str, destination: str, cabin_class: str = "Economy"
     ) -> list[dict[str, Any]]:
+        """Query on-time direct and one-stop alternate itineraries matching cabin availability.
+
+        Args:
+            origin: 3-letter IATA departure airport code.
+            destination: 3-letter IATA arrival airport code.
+            cabin_class: Target cabin class (``Economy`` or ``Business``).
+
+        Returns:
+            List of candidate nonstop and one-stop itinerary dictionaries sorted by departure.
+        """
         orig = origin.strip().upper()
         dest = destination.strip().upper()
         cabin = cabin_class.strip().lower()
@@ -838,6 +848,7 @@ class ReservationRepository:
                     now,
                 ),
             )
+        self.sync_to_gcs()
         return ApprovalRecord(
             approval_id=approval_id,
             pnr=pnr.strip().upper(),
@@ -893,7 +904,10 @@ class ReservationRepository:
             row = conn.execute(
                 "SELECT * FROM approvals WHERE approval_id = ?", (approval_id,)
             ).fetchone()
-            return self._row_to_approval(row) if row else None
+            record = self._row_to_approval(row) if row else None
+        if record is not None:
+            self.sync_to_gcs()
+        return record
 
     def consume_approval_request(self, approval_id: str) -> ApprovalRecord | None:
         """Mark an APPROVED request as CONSUMED once executed to block replay."""
@@ -909,7 +923,10 @@ class ReservationRepository:
             row = conn.execute(
                 "SELECT * FROM approvals WHERE approval_id = ?", (approval_id,)
             ).fetchone()
-            return self._row_to_approval(row) if row else None
+            record = self._row_to_approval(row) if row else None
+        if record is not None:
+            self.sync_to_gcs()
+        return record
 
     def list_approvals(self, status: str | None = None) -> list[ApprovalRecord]:
         with self._lock, self._connect() as conn:

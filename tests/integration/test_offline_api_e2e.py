@@ -105,3 +105,18 @@ def test_offline_fastapi_ui_hitl_and_a2a_endpoints(
         card = client.get("/a2a/app/.well-known/agent-card.json")
         assert card.status_code == 200
         assert card.json()["name"] == "skycare_concierge"
+
+        home = client.get("/")
+        assert home.status_code == 200
+        assert "langSelect" in home.text
+
+        js = client.get("/skycare-assets/app.js")
+        assert js.status_code == 200
+        assert "Bandeja de Aprobación HITL" in js.text
+        assert "Pro 4 (Carbon)" in js.text
+        assert "Intl.NumberFormat" in js.text
+        assert "Pro 3.1" not in js.text
+
+        status = client.get("/api/status")
+        assert status.status_code == 200
+        assert status.json()["pro_model"] == "gemini-4-carbon"

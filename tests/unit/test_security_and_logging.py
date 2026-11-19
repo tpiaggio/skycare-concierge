@@ -63,6 +63,25 @@ def test_redact_text_masks_sensitive_entities_preserves_pnr_and_flight() -> None
     assert result.redacted_total == 6
 
 
+def test_redact_text_masks_spanish_passport_and_dob() -> None:
+    """Spanish passport and DOB context keywords scrub reliably without breaking PNRs."""
+    sample = (
+        "Reserva SKY842 vuelo SC402. Mi pasaporte es US998877, "
+        "fecha de nacimiento: 1990-04-12 y correo elena@example.com."
+    )
+    result = redact_text(sample)
+
+    assert "SKY842" in result.text
+    assert "SC402" in result.text
+    assert "US998877" not in result.text
+    assert "1990-04-12" not in result.text
+    assert "elena@example.com" not in result.text
+    assert "[REDACTED_PASSPORT]" in result.text
+    assert "[REDACTED_DOB]" in result.text
+    assert "[REDACTED_EMAIL]" in result.text
+    assert result.redacted_total == 3
+
+
 def test_redact_payload_masks_nested_keys_and_strings() -> None:
     """Recursive dict redaction protects sensitive keys regardless of shape."""
     payload = {

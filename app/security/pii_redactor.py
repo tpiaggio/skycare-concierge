@@ -23,10 +23,10 @@ from typing import Any
 _EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
 _SSN_RE = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
 _PASSPORT_CONTEXT_RE = re.compile(
-    r"(?i)\b(passport(?:\s*(?:is|no|num|number|#|:))?\s*[:=#]?\s*)([A-Z0-9]{6,10})\b"
+    r"(?i)\b((?:passport|pasaporte|documento)(?:\s*(?:is|es|de|no|nro|num|n[uú]mero|number|#|:))?\s*[:=#]?\s*)([A-Z0-9]{6,10})\b"
 )
 _DOB_CONTEXT_RE = re.compile(
-    r"(?i)\b((?:dob|date\s+of\s+birth|birth\s*date)(?:\s*is)?\s*[:=#]?\s*)(\d{4}-\d{2}-\d{2}|\d{2}/\d{2}/\d{4})\b"
+    r"(?i)\b((?:dob|date\s+of\s+birth|birth\s*date|fecha\s+de\s+nacimiento)(?:\s*(?:is|es))?\s*[:=#]?\s*)(\d{4}-\d{2}-\d{2}|\d{2}/\d{2}/\d{4})\b"
 )
 _PHONE_RE = re.compile(
     r"(?<!\d)(?:\+\d{1,3}[\s.-]?)?(?:\(\d{3}\)|\d{3})[\s.-]?\d{3}[\s.-]?\d{4}(?!\d)"
@@ -46,10 +46,13 @@ _SENSITIVE_KEY_EXACT = frozenset(
         "cvv",
         "date_of_birth",
         "dob",
+        "documento",
         "email",
         "email_address",
+        "fecha_nacimiento",
         "loyalty_pin",
         "pan",
+        "pasaporte",
         "passport",
         "passport_number",
         "password",

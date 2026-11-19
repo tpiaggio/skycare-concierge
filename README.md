@@ -93,13 +93,16 @@ Open:
 # Lint, formatting check, spellcheck, and static type check (ruff, codespell, ty)
 agents-cli lint
 
-# Offline unit + FastAPI / HITL / A2A E2E tests (14 tests, zero network calls)
+# Offline unit + bilingual FastAPI / HITL / A2A E2E tests (16 tests, zero network calls)
 USE_IN_MEMORY_SESSION=true uv run pytest tests/unit tests/integration/test_offline_api_e2e.py -v
+
+# Live Vertex AI bilingual (EN/ES) integration & A2A tests (5 tests, total 21 pytest cases)
+USE_IN_MEMORY_SESSION=true uv run pytest tests/integration/test_agent.py tests/integration/test_server_e2e.py -v
 
 # Live ADK & FastAPI server integration tests (requires Vertex AI credentials)
 USE_IN_MEMORY_SESSION=true uv run pytest tests/integration/test_agent.py tests/integration/test_server_e2e.py -v
 
-# Live 7-case golden evaluation suite (threshold: custom_response_quality >= 4.0)
+# Live 9-case bilingual (EN/ES) golden evaluation suite (threshold: custom_response_quality >= 4.0)
 agents-cli eval run --project your-gcp-project-id --region us-east1 --concurrency 2 --qps 5
 ```
 
@@ -133,11 +136,11 @@ skycare-concierge/
 │   ├── security/                # Luhn-validated PII redactor & Secret Manager provider abstraction
 │   ├── storage/repository.py    # WAL SQLite + optional GCS snapshot repository & HITL state machine
 │   ├── tools/                   # Strict Pydantic schemas & 6 airline recovery tools
-│   └── web/                     # Custom SkyCare Operations Desk UI (HTML/CSS/JS)
+│   └── web/                     # Bilingual (EN/ES) SkyCare Operations Desk UI (HTML/CSS/JS)
 ├── deployment/terraform/        # Single-project and CI/CD (WIF) Terraform IaC (no BigQuery)
 ├── docs/                        # Architecture, AgentOps Matrix, Security, Deployment, Demo guides
 ├── tests/
-│   ├── eval/                    # 7-case golden dataset, custom Gemini judge, threshold config
+│   ├── eval/                    # 9-case bilingual (EN/ES) golden dataset, Gemini judge, config
 │   ├── integration/             # Offline FastAPI E2E, live ADK stream, live SSE/A2A server tests
 │   ├── load_test/               # Locust load test target
 │   └── unit/                    # Security, logging, tools, repository, plugin, and memory tests
